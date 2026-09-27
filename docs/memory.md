@@ -266,7 +266,8 @@ To ensure razor-sharp focus on the core machine coding MVP, the following featur
 - *(Fixed)* Fixed tsconfig.json moduleResolution (node → node16) and module (node16); build now succeeds.
 - *(Fixed)* Fixed Render TypeScript build error (missing type declarations for express and cors in production): moved @types/express, @types/cors, @types/node, @types/pg, typescript, tsx, drizzle-kit to dependencies and added --include=dev to render.yaml build command; verified clean production build with npm install --omit=dev.
 - *(Verified)* Step 7.3b complete — Migrations run on Render PostgreSQL database, 3 benchmark problems seeded, live health endpoint returns 200 ok, live /api/problems returns 3 seeded problems (6/6 tests pass). Documented in `docs/phase7_migrations_report.md`.
-- Current Status: Step 7.3b complete.
+- *(Fixed)* Frontend deployment build configuration: Identified buildCommand mismatch in Render Static Site settings (`cd backend` was run instead of `cd frontend`), moved Vite and Tailwind to dependencies in `frontend/package.json` for production safety, and added build scripts to root `package.json`.
+- Current Status: Step 7.3b complete (Ready for Frontend Deployment on Render).
 - Next step: Step 7.4 (Frontend Deployment).
 
 ---

@@ -1,4 +1,11 @@
 {
+  "name": "lld-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install && npm run build"
+  },
   "dependencies": {
     "@neon/config": "^1.8.2",
     "@neon/env": "^1.4.7"
