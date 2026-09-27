@@ -1,0 +1,18 @@
+# LLD Lab
+
+> A focused LLD practice platform. Submit solutions, get deterministic + AI feedback, and track your improvement over time.
+
+## Main Pages
+
+- [Problems](https://lld-lab.vercel.app/problems): Practice Parking Lot, Elevator System, Vending Machine, and more.
+- [History](https://lld-lab.vercel.app/history): View past attempts, weak areas, and progress.
+- [Problem Detail](https://lld-lab.vercel.app/problems/1): View requirements and course link for each problem.
+
+## Documentation
+
+- [README](https://github.com/yourusername/lld-lab): Setup instructions and project overview.
+- [AI_USAGE](https://github.com/yourusername/lld-lab/blob/main/docs/AI_USAGE.md): AI-assisted decisions.
+
+## Contact
+
+- GitHub: https://github.com/yourusername/lld-lab
