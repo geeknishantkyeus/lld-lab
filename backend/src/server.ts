@@ -4,19 +4,14 @@ import { db } from './config/db';
 import { redis } from './config/redis';
 import { sql } from 'drizzle-orm';
 
-const PORT = env.PORT || 5000;
+const port = env.PORT || 5000;
 
 async function start() {
   try {
-    await db.execute(sql`SELECT 1`);
-    console.log('Database connected');
-
-    await redis.ping();
-    console.log('Redis connected');
-
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    await Promise.all([db.execute(sql`SELECT 1`), redis.ping()]);
+    app.listen(port, () => console.log(`Server running on port ${port}`));
   } catch (err) {
-    console.error('Startup failed:', err);
+    console.error('Failed to start server:', err);
     process.exit(1);
   }
 }

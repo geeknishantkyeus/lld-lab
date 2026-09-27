@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 import { db } from '../config/db';
 import { attempts } from '../models/attempt';
 import { feedbacks } from '../models/feedback';
@@ -29,12 +29,11 @@ router.get('/:id/weak-areas', async (req, res) => {
       return res.json({ success: true, data: { weakAreas: [], totalAttempts: 0 } });
     }
 
-    const allFeedbacks = await Promise.all(
-      userAttempts.map(async (a) => {
-        const [fb] = await db.select().from(feedbacks).where(eq(feedbacks.attemptId, a.id));
-        return fb;
-      })
-    );
+    const attemptIds = userAttempts.map((a) => a.id);
+    const allFeedbacks = await db
+      .select()
+      .from(feedbacks)
+      .where(inArray(feedbacks.attemptId, attemptIds));
 
     const validFeedbacks = allFeedbacks.filter((fb) => fb && fb.aiResults);
 
@@ -118,12 +117,17 @@ router.get('/:id/progress', async (req, res) => {
       });
     }
 
-    const allFeedbacks = await Promise.all(
-      userAttempts.map(async (a) => {
-        const [fb] = await db.select().from(feedbacks).where(eq(feedbacks.attemptId, a.id));
-        return { attempt: a, feedback: fb };
-      })
-    );
+    const attemptIds = userAttempts.map((a) => a.id);
+    const feedbackList = await db
+      .select()
+      .from(feedbacks)
+      .where(inArray(feedbacks.attemptId, attemptIds));
+
+    const feedbackMap = new Map(feedbackList.map((fb) => [fb.attemptId, fb]));
+    const allFeedbacks = userAttempts.map((a) => ({
+      attempt: a,
+      feedback: feedbackMap.get(a.id) || null,
+    }));
 
     const completed = allFeedbacks.filter(
       (f) => f.attempt.status === 'COMPLETED' && f.feedback?.deterministicResults

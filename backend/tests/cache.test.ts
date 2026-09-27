@@ -10,39 +10,39 @@ describe('Cache Tests', () => {
     await invalidateCache(key);
   });
 
-  test('Cache key generation is deterministic', () => {
+  test('produces deterministic sha256 cache keys', () => {
     const key1 = generateCacheKey(problemId, submission);
     const key2 = generateCacheKey(problemId, submission);
     expect(key1).toBe(key2);
     expect(key1).toMatch(/^feedback:[a-f0-9]{64}$/);
   });
 
-  test('Cache key differs for different submissions', () => {
+  test('distinguishes between different code submissions', () => {
     const key1 = generateCacheKey(problemId, submission);
     const key2 = generateCacheKey(problemId, 'different solution');
     expect(key1).not.toBe(key2);
   });
 
-  test('Cache key differs for different problems', () => {
+  test('distinguishes between different problems', () => {
     const key1 = generateCacheKey(1, submission);
     const key2 = generateCacheKey(2, submission);
     expect(key1).not.toBe(key2);
   });
 
-  test('Cache miss returns null', async () => {
+  test('returns null on cache miss', async () => {
     const key = generateCacheKey(999, 'non-existent');
     const result = await getCachedFeedback(key);
     expect(result).toBeNull();
   });
 
-  test('Cache set and get works', async () => {
+  test('stores and retrieves cached feedback payloads', async () => {
     const key = generateCacheKey(problemId, submission);
     await setCachedFeedback(key, testValue);
     const result = await getCachedFeedback(key);
     expect(result).toEqual(testValue);
   });
 
-  test('Cache TTL is set correctly', async () => {
+  test('sets 24-hour expiration on stored keys', async () => {
     const key = generateCacheKey(problemId, submission);
     await setCachedFeedback(key, testValue);
     const ttl = await getCacheTTL(key);
@@ -50,7 +50,7 @@ describe('Cache Tests', () => {
     expect(ttl).toBeLessThanOrEqual(86400);
   });
 
-  test('Cache invalidation works', async () => {
+  test('deletes keys on invalidation', async () => {
     const key = generateCacheKey(problemId, submission);
     await setCachedFeedback(key, testValue);
     await invalidateCache(key);
@@ -59,8 +59,8 @@ describe('Cache Tests', () => {
   });
 });
 
-describe('Cache Failure Handling', () => {
-  test('Cache get failure returns null (no crash)', async () => {
+describe('Cache Resilience', () => {
+  test('handles redis read errors gracefully', async () => {
     const { redis } = require('../src/config/redis');
     const originalGet = redis.get;
     
@@ -75,7 +75,7 @@ describe('Cache Failure Handling', () => {
     redis.get = originalGet;
   });
 
-  test('Cache set failure does not crash evaluation', async () => {
+  test('handles redis write errors without throwing', async () => {
     const { redis } = require('../src/config/redis');
     const originalSet = redis.set;
     
@@ -89,7 +89,7 @@ describe('Cache Failure Handling', () => {
     redis.set = originalSet;
   });
 
-  test('Cache TTL is exactly 24 hours (86400 seconds)', async () => {
+  test('maintains 86400s TTL accuracy', async () => {
     const { generateCacheKey, setCachedFeedback, getCacheTTL } = require('../src/config/cache');
     const key = generateCacheKey(1, 'ttl test unique ' + Date.now());
     await setCachedFeedback(key, { test: 'value' });
@@ -98,4 +98,3 @@ describe('Cache Failure Handling', () => {
     expect(ttl).toBeLessThanOrEqual(86400);
   });
 });
-

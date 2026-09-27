@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { compareAttempts } from '../api/attempts';
 import { getWeakAreas, getProgress } from '../api/users';
+import ComparisonCard from '../components/ComparisonCard';
+import ScoreTrendChart from '../components/ScoreTrendChart';
+import WeakAreasList from '../components/WeakAreasList';
 import type { Attempt, ApiResponse } from '../types';
 
 interface AttemptWithProblem extends Attempt {
@@ -119,77 +122,10 @@ export default function HistoryPage() {
       )}
 
       {comparison && (
-        <div className="bg-white p-6 rounded-2xl border border-border shadow-card mb-6">
-          <h2 className="text-xl font-semibold text-text mb-4">Comparison</h2>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-medium text-text mb-2">Attempt #{comparison.attempt1.id}</h3>
-              <p className="text-sm text-text-secondary mb-1">Date: {new Date(comparison.attempt1.createdAt).toLocaleString()}</p>
-              <p className="text-sm text-text-secondary mb-1">Score: <span className="font-semibold">{comparison.attempt1.feedback?.deterministicResults?.score || 0}/100</span></p>
-              <p className="text-sm text-text-secondary">Status: {comparison.attempt1.status}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-text mb-2">Attempt #{comparison.attempt2.id}</h3>
-              <p className="text-sm text-text-secondary mb-1">Date: {new Date(comparison.attempt2.createdAt).toLocaleString()}</p>
-              <p className="text-sm text-text-secondary mb-1">Score: <span className="font-semibold">{comparison.attempt2.feedback?.deterministicResults?.score || 0}/100</span></p>
-              <p className="text-sm text-text-secondary">Status: {comparison.attempt2.status}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setComparison(null)}
-            className="mt-4 text-sm text-primary hover:underline font-medium"
-          >
-            Close Comparison
-          </button>
-        </div>
+        <ComparisonCard comparison={comparison} onClose={() => setComparison(null)} />
       )}
 
-      {weakAreas.length > 0 && (
-        <div className="bg-white p-6 rounded-2xl border border-border shadow-card mb-6">
-          <h2 className="text-xl font-semibold text-text mb-2">Weak Areas</h2>
-          <p className="text-sm text-text-secondary mb-4">
-            Based on your past attempts, focus on these areas:
-          </p>
-          <div className="space-y-3">
-            {weakAreas.slice(0, 5).map((area) => (
-              <div key={area.key} className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-medium text-text">{area.label}</span>
-                  <span className="text-xs text-text-secondary ml-2">
-                    ({area.attemptCount} attempts)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-32 h-2 bg-border rounded overflow-hidden">
-                    <div
-                      className={`h-full ${
-                        area.averageScore >= 7 ? 'bg-success' :
-                        area.averageScore >= 5 ? 'bg-warning' :
-                        'bg-error'
-                      }`}
-                      style={{ width: `${area.averageScore * 10}%` }}
-                    ></div>
-                  </div>
-                  <span className={`text-sm font-semibold ${
-                    area.averageScore >= 7 ? 'text-success' :
-                    area.averageScore >= 5 ? 'text-warning' :
-                    'text-error'
-                  }`}>
-                    {area.averageScore}/10
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {weakAreas.filter((a) => a.isWeak).length > 0 && (
-            <div className="mt-4 p-3 bg-warning bg-opacity-10 rounded-xl">
-              <p className="text-sm text-warning font-medium">
-                <strong>Focus areas:</strong> {weakAreas.filter((a) => a.isWeak).map((a) => a.label).join(', ')}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      <WeakAreasList weakAreas={weakAreas} />
 
       {progress && progress.totalAttempts > 0 && (
         <div className="bg-white p-6 rounded-2xl border border-border shadow-card mb-6">
@@ -226,27 +162,7 @@ export default function HistoryPage() {
             </div>
           )}
 
-          {progress.scoreTrend.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-text mb-3">Score Trend</p>
-              <div className="flex items-end gap-2 h-32">
-                {progress.scoreTrend.map((point: any) => (
-                  <div key={point.attemptId} className="flex-1 flex flex-col items-center">
-                    <div
-                      className={`w-full rounded-t ${
-                        point.score >= 70 ? 'bg-success' :
-                        point.score >= 40 ? 'bg-warning' :
-                        'bg-error'
-                      }`}
-                      style={{ height: `${(point.score / 100) * 100}%`, minHeight: '4px' }}
-                      title={`Attempt #${point.attemptId}: ${point.score}/100`}
-                    ></div>
-                    <span className="text-xs text-text-secondary mt-1">#{point.attemptId}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <ScoreTrendChart scoreTrend={progress.scoreTrend} />
         </div>
       )}
 

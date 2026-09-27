@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getProblem } from '../api/problems';
+import DifficultyBadge from '../components/DifficultyBadge';
 import type { Problem } from '../types';
 
 export default function ProblemDetail() {
@@ -63,13 +64,7 @@ export default function ProblemDetail() {
         <h1 className="text-4xl font-bold text-text">
           {problem.title}
         </h1>
-        <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
-          problem.difficulty === 'Easy' ? 'bg-success bg-opacity-10 text-success' :
-          problem.difficulty === 'Medium' ? 'bg-warning bg-opacity-10 text-warning' :
-          'bg-error bg-opacity-10 text-error'
-        }`}>
-          {problem.difficulty}
-        </span>
+        <DifficultyBadge difficulty={problem.difficulty} />
       </div>
 
       <p className="text-lg text-text-secondary mb-8">

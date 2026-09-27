@@ -1,7 +1,7 @@
 import { logAIUsage, getAIUsageStats, getAIUsageLogs } from '../src/config/aiUsage';
 
 describe('AI Usage Tracking Tests', () => {
-  test('logAIUsage adds log entry', () => {
+  test('appends usage record to in-memory log', () => {
     const initialCount = getAIUsageLogs().length;
     
     logAIUsage({
@@ -16,7 +16,7 @@ describe('AI Usage Tracking Tests', () => {
     expect(getAIUsageLogs().length).toBe(initialCount + 1);
   });
 
-  test('getAIUsageStats returns correct structure', () => {
+  test('returns expected statistical fields', () => {
     const stats = getAIUsageStats();
     expect(stats).toHaveProperty('totalCalls');
     expect(stats).toHaveProperty('successfulCalls');
@@ -26,7 +26,7 @@ describe('AI Usage Tracking Tests', () => {
     expect(stats).toHaveProperty('estimatedCostUSD');
   });
 
-  test('getAIUsageStats counts successful and failed calls', () => {
+  test('tracks success and failure counts', () => {
     const beforeStats = getAIUsageStats();
     
     logAIUsage({
@@ -53,7 +53,7 @@ describe('AI Usage Tracking Tests', () => {
     expect(afterStats.failedCalls).toBeGreaterThanOrEqual(beforeStats.failedCalls);
   });
 
-  test('getAIUsageStats calculates token totals correctly', () => {
+  test('aggregates consumed tokens', () => {
     const beforeStats = getAIUsageStats();
     
     logAIUsage({
@@ -69,14 +69,14 @@ describe('AI Usage Tracking Tests', () => {
     expect(afterStats.totalTokens).toBeGreaterThanOrEqual(beforeStats.totalTokens + 200);
   });
 
-  test('getAIUsageStats calculates estimated cost', () => {
+  test('calculates cost estimate based on token count', () => {
     const stats = getAIUsageStats();
     expect(stats.estimatedCostUSD).toBeGreaterThanOrEqual(0);
     const expectedCost = (stats.totalTokens / 1000000) * 0.075;
     expect(stats.estimatedCostUSD).toBeCloseTo(expectedCost, 5);
   });
 
-  test('getAIUsageLogs returns array', () => {
+  test('retrieves raw log entries array', () => {
     const logs = getAIUsageLogs();
     expect(Array.isArray(logs)).toBe(true);
   });

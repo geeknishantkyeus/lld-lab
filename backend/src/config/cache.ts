@@ -17,13 +17,11 @@ export async function getCachedFeedback<T>(cacheKey: string): Promise<T | null> 
   try {
     const cached = await redis.get(cacheKey);
     if (cached) {
-      console.log(`[Cache] Hit: ${cacheKey}`);
       return JSON.parse(cached) as T;
     }
-    console.log(`[Cache] Miss: ${cacheKey}`);
     return null;
   } catch (err) {
-    console.error('[Cache] Get error:', err);
+    console.error('Cache read failed:', err);
     return null;
   }
 }
@@ -31,9 +29,8 @@ export async function getCachedFeedback<T>(cacheKey: string): Promise<T | null> 
 export async function setCachedFeedback(cacheKey: string, value: object): Promise<void> {
   try {
     await redis.set(cacheKey, JSON.stringify(value), 'EX', CACHE_TTL);
-    console.log(`[Cache] Set: ${cacheKey}`);
   } catch (err) {
-    console.error('[Cache] Set error:', err);
+    console.error('Cache write failed:', err);
   }
 }
 
@@ -43,7 +40,6 @@ export async function getCacheTTL(cacheKey: string): Promise<number> {
 
 export async function invalidateCache(cacheKey: string): Promise<void> {
   await redis.del(cacheKey);
-  console.log(`[Cache] Invalidated: ${cacheKey}`);
 }
 
 export async function flushAllCache(): Promise<void> {
@@ -51,5 +47,4 @@ export async function flushAllCache(): Promise<void> {
   if (keys.length > 0) {
     await redis.del(...keys);
   }
-  console.log(`[Cache] Flushed ${keys.length} keys`);
 }

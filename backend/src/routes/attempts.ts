@@ -11,7 +11,7 @@ const router = Router();
 router.post('/', async (req, res) => {
   try {
     const { userId, problemId, submission } = req.body;
-    if (!problemId || isNaN(+problemId) || !submission || typeof submission !== 'string') {
+    if (!problemId || isNaN(+problemId) || !submission || typeof submission !== 'string' || !submission.trim()) {
       return res.status(400).json({ success: false, error: 'problemId and submission required' });
     }
     const [attempt] = await db.insert(attempts).values({
@@ -62,9 +62,9 @@ router.get('/compare/:id1/:id2', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const attempt = await db.select().from(attempts).where(eq(attempts.id, +req.params.id));
-    if (!attempt.length) return res.status(404).json({ success: false, error: 'Not found' });
-    res.json({ success: true, data: attempt[0] });
+    const [attempt] = await db.select().from(attempts).where(eq(attempts.id, +req.params.id));
+    if (!attempt) return res.status(404).json({ success: false, error: 'Not found' });
+    res.json({ success: true, data: attempt });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Internal server error' });
   }
@@ -72,9 +72,9 @@ router.get('/:id', async (req, res) => {
 
 router.get('/:id/feedback', async (req, res) => {
   try {
-    const feedback = await db.select().from(feedbacks).where(eq(feedbacks.attemptId, +req.params.id));
-    if (!feedback.length) return res.status(404).json({ success: false, error: 'Feedback not ready' });
-    res.json({ success: true, data: feedback[0] });
+    const [feedback] = await db.select().from(feedbacks).where(eq(feedbacks.attemptId, +req.params.id));
+    if (!feedback) return res.status(404).json({ success: false, error: 'Feedback not ready' });
+    res.json({ success: true, data: feedback });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Internal server error' });
   }
@@ -82,9 +82,9 @@ router.get('/:id/feedback', async (req, res) => {
 
 router.get('/:id/status', async (req, res) => {
   try {
-    const attempt = await db.select().from(attempts).where(eq(attempts.id, +req.params.id));
-    if (!attempt.length) return res.status(404).json({ success: false, error: 'Not found' });
-    res.json({ success: true, data: { id: attempt[0].id, status: attempt[0].status } });
+    const [attempt] = await db.select().from(attempts).where(eq(attempts.id, +req.params.id));
+    if (!attempt) return res.status(404).json({ success: false, error: 'Not found' });
+    res.json({ success: true, data: { id: attempt.id, status: attempt.status } });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Internal server error' });
   }

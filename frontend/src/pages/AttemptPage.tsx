@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { getProblem } from '../api/problems';
 import { createAttempt, getAttemptStatus } from '../api/attempts';
 import SolutionEditor from '../components/SolutionEditor';
@@ -15,8 +16,20 @@ export default function AttemptPage() {
   const [textSolution, setTextSolution] = useState('');
   const [codeSolution, setCodeSolution] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [status, setStatus] = useState<string>('');
+  const [createdAttemptId, setCreatedAttemptId] = useState<number | null>(null);
   const [error, setError] = useState('');
+
+  const { data: statusData } = useQuery({
+    queryKey: ['attempt-status', createdAttemptId],
+    queryFn: () => getAttemptStatus(createdAttemptId!),
+    enabled: !!createdAttemptId,
+    refetchInterval: (query) => {
+      const current = query.state.data?.status;
+      return current === 'COMPLETED' || current === 'FAILED' ? false : 2000;
+    },
+  });
+
+  const currentStatus = statusData?.status || (createdAttemptId ? 'PENDING' : '');
 
   useEffect(() => {
     async function fetchProblem() {
@@ -26,6 +39,15 @@ export default function AttemptPage() {
     }
     fetchProblem();
   }, [problemId]);
+
+  useEffect(() => {
+    if (statusData?.status === 'COMPLETED' || statusData?.status === 'FAILED') {
+      const timer = setTimeout(() => {
+        navigate(`/attempts/${createdAttemptId}/feedback`);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusData?.status, createdAttemptId, navigate]);
 
   async function handleSubmit() {
     if (!textSolution.trim() && !codeSolution.trim()) {
@@ -40,21 +62,7 @@ export default function AttemptPage() {
       const submission = `TEXT:\n${textSolution}\n\nCODE:\n${codeSolution}`;
       const attempt = await createAttempt(problemId, submission);
       if (!attempt) throw new Error('Failed to create attempt');
-
-      setStatus('PENDING');
-
-      const interval = setInterval(async () => {
-        const statusData = await getAttemptStatus(attempt.id);
-        if (statusData) {
-          setStatus(statusData.status);
-          if (statusData.status === 'COMPLETED' || statusData.status === 'FAILED') {
-            clearInterval(interval);
-            setTimeout(() => {
-              navigate(`/attempts/${attempt.id}/feedback`);
-            }, 1000);
-          }
-        }
-      }, 2000);
+      setCreatedAttemptId(attempt.id);
     } catch (err) {
       setError('Failed to submit attempt');
       setSubmitting(false);
@@ -113,22 +121,22 @@ export default function AttemptPage() {
         </div>
       )}
 
-      {status && (
+      {currentStatus && (
         <div className="bg-primary bg-opacity-10 text-primary p-4 rounded-xl mt-4 font-medium">
-          Status: {status}
-          {status === 'PENDING' && ' — Waiting for evaluation...'}
-          {status === 'EVALUATING' && ' — Evaluating your solution...'}
-          {status === 'COMPLETED' && ' — Redirecting to feedback...'}
-          {status === 'FAILED' && ' — Evaluation failed. Redirecting...'}
+          Status: {currentStatus}
+          {currentStatus === 'PENDING' && ' — Waiting for evaluation...'}
+          {currentStatus === 'EVALUATING' && ' — Evaluating your solution...'}
+          {currentStatus === 'COMPLETED' && ' — Redirecting to feedback...'}
+          {currentStatus === 'FAILED' && ' — Evaluation failed. Redirecting...'}
         </div>
       )}
 
       <button
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || !!createdAttemptId}
         className="mt-6 bg-primary text-white px-8 py-3 rounded-xl font-semibold hover:bg-primary-dark transition shadow-button disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {submitting ? 'Submitting...' : 'Submit Solution'}
+        {submitting || !!createdAttemptId ? 'Submitting...' : 'Submit Solution'}
       </button>
     </div>
   );

@@ -14,9 +14,12 @@ export default function FeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retrying, setRetrying] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     async function fetchFeedback() {
+      setLoading(true);
+      setError('');
       try {
         const data = await getFeedback(attemptId);
         if (data) {
@@ -36,15 +39,16 @@ export default function FeedbackPage() {
       }
     }
     fetchFeedback();
-  }, [attemptId]);
+  }, [attemptId, refreshKey]);
 
   async function handleRetry() {
     setRetrying(true);
     try {
       await retryAttempt(attemptId);
-      window.location.reload();
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       setError('Retry failed');
+    } finally {
       setRetrying(false);
     }
   }

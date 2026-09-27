@@ -4,6 +4,16 @@ interface Props {
   feedback: Feedback;
 }
 
+const dimensions = [
+  { key: 'responsibilityClarity', label: 'Responsibility Clarity' },
+  { key: 'solidCompliance', label: 'SOLID Compliance' },
+  { key: 'couplingCohesion', label: 'Coupling & Cohesion' },
+  { key: 'encapsulation', label: 'Encapsulation' },
+  { key: 'patternAppropriateness', label: 'Pattern Appropriateness' },
+  { key: 'extensibility', label: 'Extensibility' },
+  { key: 'designTradeoffs', label: 'Design Trade-offs' },
+];
+
 export default function FeedbackPanel({ feedback }: Props) {
   const { deterministicResults, aiResults, cached } = feedback;
 
@@ -108,48 +118,16 @@ export default function FeedbackPanel({ feedback }: Props) {
             )}
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {aiResults.responsibilityClarity !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">Responsibility Clarity</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.responsibilityClarity}/10</p>
-                </div>
-              )}
-              {aiResults.solidCompliance !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">SOLID Compliance</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.solidCompliance}/10</p>
-                </div>
-              )}
-              {aiResults.couplingCohesion !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">Coupling & Cohesion</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.couplingCohesion}/10</p>
-                </div>
-              )}
-              {aiResults.encapsulation !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">Encapsulation</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.encapsulation}/10</p>
-                </div>
-              )}
-              {aiResults.patternAppropriateness !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">Pattern Appropriateness</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.patternAppropriateness}/10</p>
-                </div>
-              )}
-              {aiResults.extensibility !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">Extensibility</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.extensibility}/10</p>
-                </div>
-              )}
-              {aiResults.designTradeoffs !== undefined && (
-                <div>
-                  <p className="text-sm text-text-secondary">Design Trade-offs</p>
-                  <p className="text-lg font-semibold text-text">{aiResults.designTradeoffs}/10</p>
-                </div>
-              )}
+              {dimensions.map(({ key, label }) => {
+                const value = aiResults[key as keyof typeof aiResults];
+                if (typeof value !== 'number') return null;
+                return (
+                  <div key={key}>
+                    <p className="text-sm text-text-secondary">{label}</p>
+                    <p className="text-lg font-semibold text-text">{value}/10</p>
+                  </div>
+                );
+              })}
             </div>
 
             {aiResults.suggestions && aiResults.suggestions.length > 0 && (

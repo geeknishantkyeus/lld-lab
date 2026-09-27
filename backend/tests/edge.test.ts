@@ -9,7 +9,7 @@ describe('Edge Case Tests', () => {
     await db.execute(sql`DELETE FROM attempts`);
   });
 
-  test('Invalid problem ID creates FAILED attempt', async () => {
+  test('marks attempt as failed for invalid problem id', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 999, submission: 'invalid' });
@@ -20,7 +20,7 @@ describe('Edge Case Tests', () => {
     expect(statusRes.body.data.status).toBe('FAILED');
   });
 
-  test('Retry FAILED attempt works', async () => {
+  test('retries a failed attempt', async () => {
     const createRes = await request(app)
       .post('/api/attempts')
       .send({ problemId: 999, submission: 'invalid' });
@@ -32,44 +32,44 @@ describe('Edge Case Tests', () => {
     expect(retryRes.body.data.status).toBe('PENDING');
   });
 
-  test('Get feedback for non-existent attempt returns 404', async () => {
+  test('returns 404 for missing attempt feedback', async () => {
     const res = await request(app).get('/api/attempts/99999/feedback');
     expect(res.status).toBe(404);
   });
 
-  test('Get status for non-existent attempt returns 404', async () => {
+  test('returns 404 for missing attempt status', async () => {
     const res = await request(app).get('/api/attempts/99999/status');
     expect(res.status).toBe(404);
   });
 });
 
-describe('Edge Cases Additional', () => {
+describe('Input Validation & Edge Cases', () => {
   beforeAll(async () => {
     await db.execute(sql`TRUNCATE TABLE feedbacks, attempts RESTART IDENTITY CASCADE`);
   });
 
-  test('Missing problemId returns 400', async () => {
+  test('requires problem id in request body', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ submission: 'class Test {}' });
     expect(res.status).toBe(400);
   });
 
-  test('Missing submission returns 400', async () => {
+  test('requires submission string in request body', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1 });
     expect(res.status).toBe(400);
   });
 
-  test('Whitespace-only submission returns 400', async () => {
+  test('rejects whitespace-only submissions', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: '   ' });
-    expect([400, 201]).toContain(res.status);
+    expect(res.status).toBe(400);
   });
 
-  test('Negative problemId creates attempt that fails', async () => {
+  test('fails evaluation on negative problem id', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: -1, submission: 'test' });
@@ -80,7 +80,7 @@ describe('Edge Cases Additional', () => {
     expect(statusRes.body.data.status).toBe('FAILED');
   });
 
-  test('Very long submission is accepted', async () => {
+  test('accepts large solution payload', async () => {
     const longSubmission = 'class A {}\n'.repeat(500);
     const res = await request(app)
       .post('/api/attempts')
@@ -97,7 +97,7 @@ describe('LLM Failure Simulation', () => {
     await invalidateCache(generateCacheKey(1, 'class Test {}'));
   });
 
-  test('LLM failure falls back to deterministic results', async () => {
+  test('falls back to deterministic score when LLM fails', async () => {
     const llmModule = require('../src/evaluators/llm');
     const originalEvaluate = llmModule.evaluateLLM;
     
@@ -129,7 +129,7 @@ describe('Concurrent Attempts', () => {
     await db.execute(sql`TRUNCATE TABLE feedbacks, attempts RESTART IDENTITY CASCADE`);
   });
 
-  test('Multiple concurrent attempts are processed correctly', async () => {
+  test('processes concurrent evaluation jobs', async () => {
     const promises = [
       request(app).post('/api/attempts').send({ problemId: 1, submission: 'class A {}' }),
       request(app).post('/api/attempts').send({ problemId: 1, submission: 'class B {}' }),
@@ -153,40 +153,40 @@ describe('Concurrent Attempts', () => {
   }, 30000);
 });
 
-describe('Invalid Data Handling', () => {
+describe('Malformed Data Handling', () => {
   beforeAll(async () => {
     await db.execute(sql`TRUNCATE TABLE feedbacks, attempts RESTART IDENTITY CASCADE`);
   });
 
-  test('Non-numeric problemId returns 400 or creates failed attempt', async () => {
+  test('rejects non-numeric problem id', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 'not-a-number', submission: 'test' });
-    expect([400, 201]).toContain(res.status);
+    expect(res.status).toBe(400);
   });
 
-  test('Null submission returns 400', async () => {
+  test('rejects null submission value', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: null });
     expect(res.status).toBe(400);
   });
 
-  test('Object submission returns 400', async () => {
+  test('rejects object submission value', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: { invalid: 'object' } });
-    expect([400, 500]).toContain(res.status);
+    expect(res.status).toBe(400);
   });
 
-  test('Array submission returns 400', async () => {
+  test('rejects array submission value', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: ['array', 'submission'] });
-    expect([400, 500]).toContain(res.status);
+    expect(res.status).toBe(400);
   });
 
-  test('SQL injection attempt in submission is safe', async () => {
+  test('safely parameterizes sql injection patterns in code', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: "'; DROP TABLE attempts; --" });
@@ -196,26 +196,24 @@ describe('Invalid Data Handling', () => {
     expect([200, 404]).toContain(check.status);
   });
 
-  test('Boolean submission returns 400 or 500', async () => {
+  test('rejects boolean submission value', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: true });
-    expect([400, 500]).toContain(res.status);
+    expect(res.status).toBe(400);
   });
 
-  test('Numeric submission returns 400 or 500', async () => {
+  test('rejects numeric submission value', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: 12345 });
-    expect([400, 500]).toContain(res.status);
+    expect(res.status).toBe(400);
   });
 
-  test('Special characters in submission are handled safely', async () => {
+  test('handles special characters and punctuation in code', async () => {
     const res = await request(app)
       .post('/api/attempts')
       .send({ problemId: 1, submission: 'class Test { // <>&"\'`/*$%^&*@! \n }' });
     expect(res.status).toBe(201);
   });
 });
-
-

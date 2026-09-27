@@ -4,21 +4,21 @@ import { db } from '../src/config/db';
 import { sql } from 'drizzle-orm';
 
 describe('Users API Tests', () => {
-  test('GET /api/users/:id/weak-areas returns weak areas list', async () => {
+  test('summarizes user weak areas', async () => {
     const res = await request(app).get('/api/users/1/weak-areas');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('weakAreas');
     expect(res.body.data).toHaveProperty('totalAttempts');
   });
 
-  test('GET /api/users/:id/weak-areas with non-existent user returns empty list', async () => {
+  test('returns empty weak areas for unknown user', async () => {
     const res = await request(app).get('/api/users/99999/weak-areas');
     expect(res.status).toBe(200);
     expect(res.body.data.weakAreas).toEqual([]);
     expect(res.body.data.totalAttempts).toBe(0);
   });
 
-  test('GET /api/users/:id/progress returns progress data', async () => {
+  test('calculates overall user progress metrics', async () => {
     const res = await request(app).get('/api/users/1/progress');
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveProperty('totalAttempts');
@@ -28,7 +28,7 @@ describe('Users API Tests', () => {
     expect(res.body.data).toHaveProperty('scoreTrend');
   });
 
-  test('GET /api/users/:id/progress with non-existent user returns zero stats', async () => {
+  test('returns zeroed progress stats for new user', async () => {
     const res = await request(app).get('/api/users/99999/progress');
     expect(res.status).toBe(200);
     expect(res.body.data.totalAttempts).toBe(0);
@@ -36,7 +36,7 @@ describe('Users API Tests', () => {
   });
 });
 
-describe('Users Additional Tests', () => {
+describe('User Metrics & Trend Calculations', () => {
   beforeAll(async () => {
     await db.execute(sql`TRUNCATE TABLE feedbacks, attempts RESTART IDENTITY CASCADE`);
 
@@ -51,13 +51,13 @@ describe('Users Additional Tests', () => {
     await new Promise((r) => setTimeout(r, 3000));
   }, 15000);
 
-  test('GET /api/users/:id/attempts returns attempts', async () => {
+  test('lists user submission history', async () => {
     const res = await request(app).get('/api/users/1/attempts');
     expect(res.status).toBe(200);
     expect(res.body.data.length).toBeGreaterThan(0);
   });
 
-  test('GET /api/users/:id/weak-areas returns weak areas when attempts exist', async () => {
+  test('computes dimensional averages across attempts', async () => {
     const res = await request(app).get('/api/users/1/weak-areas');
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -66,7 +66,7 @@ describe('Users Additional Tests', () => {
     expect(res.body.data).toHaveProperty('analyzedAttempts');
   });
 
-  test('Weak areas are sorted by average score (ascending)', async () => {
+  test('sorts weak areas by ascending score', async () => {
     const res = await request(app).get('/api/users/1/weak-areas');
     const weakAreas = res.body.data.weakAreas;
     for (let i = 1; i < weakAreas.length; i++) {
@@ -74,7 +74,7 @@ describe('Users Additional Tests', () => {
     }
   });
 
-  test('GET /api/users/:id/progress returns progress when attempts exist', async () => {
+  test('computes completion stats and score trends', async () => {
     const res = await request(app).get('/api/users/1/progress');
     expect(res.status).toBe(200);
     expect(res.body.data.totalAttempts).toBeGreaterThan(0);
@@ -85,7 +85,7 @@ describe('Users Additional Tests', () => {
     expect(res.body.data).toHaveProperty('scoreTrend');
   });
 
-  test('Progress score trend is sorted (oldest to newest)', async () => {
+  test('maintains chronological order in score trend', async () => {
     const res = await request(app).get('/api/users/1/progress');
     const trend = res.body.data.scoreTrend;
     for (let i = 1; i < trend.length; i++) {
@@ -95,7 +95,7 @@ describe('Users Additional Tests', () => {
     }
   });
 
-  test('GET /api/users/:id/progress for empty user returns zeros', async () => {
+  test('handles empty progress state without error', async () => {
     const res = await request(app).get('/api/users/99999/progress');
     expect(res.status).toBe(200);
     expect(res.body.data.totalAttempts).toBe(0);
@@ -103,4 +103,3 @@ describe('Users Additional Tests', () => {
     expect(res.body.data.bestScore).toBe(0);
   });
 });
-

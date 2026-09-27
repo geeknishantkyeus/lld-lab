@@ -11,7 +11,6 @@ const usageLogs: AIUsageLog[] = [];
 
 export function logAIUsage(log: AIUsageLog) {
   usageLogs.push(log);
-  console.log(`[AI Usage] ${log.model} | ${log.tokensUsed} tokens | ${log.durationMs}ms | ${log.success ? 'success' : 'failed'}`);
 }
 
 export function getAIUsageStats() {

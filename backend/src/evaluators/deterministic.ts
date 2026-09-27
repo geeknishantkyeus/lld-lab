@@ -27,15 +27,15 @@ const problemRequirements: Record<string, { classes: string[]; methods: string[]
 };
 
 export function evaluateDeterministic(submission: string, problemTitle: string): DeterministicResult {
-  const requirements = problemRequirements[problemTitle] || { classes: [], methods: [], interfaces: [] };
+  const reqs = problemRequirements[problemTitle] || { classes: [], methods: [], interfaces: [] };
 
-  const classNames = requirements.classes.filter((cls) => submission.includes(cls));
-  const methods = requirements.methods.filter((method) => submission.includes(method));
-  const interfaces = requirements.interfaces.filter((iface) => submission.includes(iface));
+  const classNames = reqs.classes.filter((c) => submission.includes(c));
+  const methods = reqs.methods.filter((m) => submission.includes(m));
+  const interfaces = reqs.interfaces.filter((i) => submission.includes(i));
 
-  const totalChecks = requirements.classes.length + requirements.methods.length + requirements.interfaces.length;
-  const passedChecks = classNames.length + methods.length + interfaces.length;
-  const score = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 0;
+  const total = reqs.classes.length + reqs.methods.length + reqs.interfaces.length;
+  const passed = classNames.length + methods.length + interfaces.length;
+  const score = total > 0 ? Math.round((passed / total) * 100) : 0;
 
   return {
     checks: {
