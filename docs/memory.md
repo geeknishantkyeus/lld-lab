@@ -207,6 +207,7 @@ To ensure razor-sharp focus on the core machine coding MVP, the following featur
 | 2026-09-27 | Phase 7 | Step 7.2: Render Database + Redis Setup (Render PostgreSQL created, Render Redis created, URLs saved, render_deployment_guide.md, render_urls.md, 6/6 tests pass) | COMPLETED | `docs/render_deployment_guide.md`, `docs/render_urls.md`, `docs/phase7_database_redis_report.md` |
 | 2026-09-27 | Phase 7 | Step 7.3a: Push Code to GitHub (Git initialized, .gitignore verified, zero secrets/dist/node_modules, 135 source files committed, GitHub push report created, 8/8 tests pass) | COMPLETED | `.gitignore`, `README.md`, `docs/github_push_report.md` |
 | 2026-09-27 | Phase 7 | Fix tsconfig.json moduleResolution (node → node16) for Render build compatibility | COMPLETED | `backend/tsconfig.json`, `backend/src/queue/inMemoryQueue.ts` |
+| 2026-09-27 | Phase 7 | Fix Render production build: move @types and build tools to dependencies, add --include=dev in render.yaml | COMPLETED | `backend/package.json`, `render.yaml` |
 
 ---
 
@@ -262,7 +263,8 @@ To ensure razor-sharp focus on the core machine coding MVP, the following featur
 - *(Verified)* Step 7.2 complete — Render PostgreSQL (lld-lab-db) and Redis (lld-lab-redis) created, connection strings recorded in `docs/render_urls.md`, step-by-step instructions in `docs/render_deployment_guide.md`, 6/6 tests passing. Documented in `docs/phase7_database_redis_report.md`.
 - *(Verified)* Step 7.3a complete — Git repository initialized, .gitignore configured, clean commit created with 135 files, zero secrets or node_modules tracked, remote push instructions and test report created (8/8 tests pass). Repository: `https://github.com/yourusername/lld-lab`. Documented in `docs/github_push_report.md`.
 - *(Fixed)* Fixed tsconfig.json moduleResolution (node → node16) and module (node16); build now succeeds.
-- Current Status: Step 7.3a complete.
+- *(Fixed)* Fixed Render TypeScript build error (missing type declarations for express and cors in production): moved @types/express, @types/cors, @types/node, @types/pg, typescript, tsx, drizzle-kit to dependencies and added --include=dev to render.yaml build command; verified clean production build with npm install --omit=dev.
+- Current Status: Step 7.3a complete (Ready for re-push to GitHub).
 - Next step: Step 7.3b (Backend Deployment).
 
 ---
