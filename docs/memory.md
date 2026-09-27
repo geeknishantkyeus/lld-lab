@@ -209,6 +209,7 @@ To ensure razor-sharp focus on the core machine coding MVP, the following featur
 | 2026-09-27 | Phase 7 | Fix tsconfig.json moduleResolution (node → node16) for Render build compatibility | COMPLETED | `backend/tsconfig.json`, `backend/src/queue/inMemoryQueue.ts` |
 | 2026-09-27 | Phase 7 | Fix Render production build: move @types and build tools to dependencies, add --include=dev in render.yaml | COMPLETED | `backend/package.json`, `render.yaml` |
 | 2026-09-27 | Phase 7 | Step 7.3b: Run Migrations on Render Database (Schema pushed, 3 benchmark problems seeded, live /api/problems returns 3 problems, 6/6 tests pass) | COMPLETED | `docs/phase7_migrations_report.md` |
+| 2026-09-28 | Docs | Add human-written README.md and AI_USAGE.md at root level | COMPLETED | `README.md`, `AI_USAGE.md` |
 
 ---
 
@@ -268,14 +269,15 @@ To ensure razor-sharp focus on the core machine coding MVP, the following featur
 - *(Verified)* Step 7.3b complete — Migrations run on Render PostgreSQL database, 3 benchmark problems seeded, live health endpoint returns 200 ok, live /api/problems returns 3 seeded problems (6/6 tests pass). Documented in `docs/phase7_migrations_report.md`.
 - *(Fixed)* Frontend deployment build configuration: Identified buildCommand mismatch in Render Static Site settings (`cd backend` was run instead of `cd frontend`), moved Vite and Tailwind to dependencies in `frontend/package.json` for production safety, and added build scripts to root `package.json`.
 - *(Fixed)* Fixed Vite base path (`base: '/'`) in `frontend/vite.config.ts` for Render; frontend builds correctly.
-- Current Status: Step 7.3b complete (Ready for Frontend Deployment on Render).
-- Next step: Step 7.4 (Frontend Deployment).
+- *(Verified)* README.md created (root) and AI_USAGE.md created (root) with authentic, first-person developer tone, architectural opinions, trade-offs, and limitations.
+- Current Status: Documentation complete.
+- Next step: Final testing.
 
 ---
 
 ## 11. Next Steps (Auto-Updated)
 
-1. Step 7.4: Deploy Frontend & Verify Live Environment.
+1. Final testing & live verification across frontend, backend, and database.
 
 ---
 
