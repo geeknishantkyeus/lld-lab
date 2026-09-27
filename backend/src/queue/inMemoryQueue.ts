@@ -1,4 +1,3 @@
-import PQueue from 'p-queue';
 import { eq } from 'drizzle-orm';
 import { db } from '../config/db';
 import { attempts } from '../models/attempt';
@@ -8,7 +7,20 @@ import { evaluateDeterministic } from '../evaluators/deterministic';
 import { evaluateLLM } from '../evaluators/llm';
 import { generateCacheKey, getCachedFeedback, setCachedFeedback } from '../config/cache';
 
-export const evaluationQueue = new PQueue({ concurrency: 2 });
+let queuePromise: Promise<any> | null = null;
+async function getQueue() {
+  if (!queuePromise) {
+    queuePromise = import('p-queue').then((m) => new m.default({ concurrency: 2 }));
+  }
+  return queuePromise;
+}
+
+export const evaluationQueue = {
+  add: async (fn: () => Promise<any>) => {
+    const q = await getQueue();
+    return q.add(fn);
+  },
+};
 
 async function evaluateWithRetry(submission: string, problemTitle: string, maxRetries = 1) {
   for (let i = 0; i <= maxRetries; i++) {
