@@ -1,113 +1,102 @@
 # LLD Lab
 
-Hey there! If you've ever prepped for low-level design or machine coding rounds at tech companies, you probably noticed the same frustrating gap I did: LeetCode is great for data structures, but there's almost nowhere to practice writing actual object-oriented architecture and get immediate, sensible feedback. Most people just draw class diagrams on a whiteboard or write code into a blank text document with nobody to critique their design choices until an interviewer rejects them.
+I built LLD Lab because preparing for Low-Level Design (LLD) and machine coding rounds is usually a frustrating experience. While LeetCode handles DSA, there's almost nowhere to write real object-oriented code, submit an architectural design, and get instant, honest feedback before stepping into an interview. LLD Lab gives you benchmark design problems (Parking Lot, Elevator System, Vending Machine), an in-browser code editor, and an automated evaluation pipeline that checks both deterministic code structure and architectural principles.
 
-I built LLD Lab to fix that. It's a hands-on workspace where you can pick a classic benchmark problem (like a multi-floor Parking Lot, an Elevator dispatch system, or a Vending Machine state engine), write out your architectural rationale and code in a multi-language editor, and get scored within a few seconds by a hybrid evaluation engine.
+## Live URLs
 
----
+- **Frontend App**: [https://lld-lab-frontend.onrender.com](https://lld-lab-frontend.onrender.com)
+- **Backend API**: [https://lld-lab-backend.onrender.com](https://lld-lab-backend.onrender.com)
+- **API Health**: [https://lld-lab-backend.onrender.com/api/health](https://lld-lab-backend.onrender.com/api/health)
 
-## How It Actually Works
+## Tech Stack
 
-When you submit a solution, I don't just dump your code into an LLM prompt and hope for the best. That approach is sloppy, unpredictable, and expensive. Instead, I split the evaluation pipeline into two distinct layers:
+I kept the stack lean and pragmatic:
+- **Backend**: Node.js 22 LTS, Express 5, TypeScript
+- **Database & Cache**: PostgreSQL (with Drizzle ORM) and Redis (`ioredis`)
+- **Evaluation**: Static syntax and signature verification (40%) + Google Gemini 2.5 Flash (60%)
+- **Queue**: In-memory job queue via `p-queue` for async evaluations
+- **Frontend**: React 19, Vite, TypeScript, Tailwind CSS
+- **Editor**: Monaco Editor (`@monaco-editor/react`) with dark theme
+- **Testing**: Jest and Supertest (73 test cases across 7 suites)
 
-First, a deterministic validator runs. It checks whether your submission covers the core requirements — expected classes (like `Vehicle`, `ParkingSpot`, `Ticket`), required method signatures, interface abstractions, and basic syntactic sanity. This part is fast, objective, and accounts for 40% of your score. If you forgot a core entity or misspelled an essential method contract, you'll see it immediately.
+## Running Locally
 
-Second, the code and design rationale get handed over to an asynchronous worker queue that calls Google's Gemini Flash model. The LLM acts like a senior engineer conducting a code review. It evaluates your solution against a strict 7-dimension rubric: Single Responsibility, Open-Closed and SOLID compliance, coupling and cohesion, encapsulation, design pattern appropriateness (and whether you over-engineered), extensibility, and trade-off justification. This gives you the remaining 60% of your score, along with concrete strengths, weaknesses, and refactoring tips.
+You'll need Node.js 20+, a running PostgreSQL instance, and a Redis instance (local or Upstash).
 
-If you submit the exact same code twice (or if multiple students submit identical starter templates), Redis intercepts the request using a SHA-256 hash of your normalized solution and returns cached feedback in under 50 milliseconds without burning another Gemini API call.
-
----
-
-## Architecture Choices (and What I Rejected)
-
-I chose a modular monolith with an Express 5 TypeScript backend and a React 19 Vite frontend. 
-
-Some people suggested spinning up microservices with Kafka, Docker sandboxes, and separate auth services. I rejected that completely. For an MVP built to serve real learners reliably, microservices would have added massive network complexity, deployment headaches, and cold-start latency for zero practical gain. A single Node process with `p-queue` handles background evaluation jobs cleanly without needing heavy worker fleets.
-
-For the database, I went with PostgreSQL managed on Render and schema migrations managed through Drizzle ORM. Drizzle is lightweight, gives me full type safety across queries, and doesn't get in the way like heavier ORMs often do.
-
-For styling, the UI is built with Tailwind CSS following CipherSchools' warm visual identity — cream backgrounds (`#FDF8F3`), deep slate text, and vibrant orange accents (`#F97316`) instead of the typical generic dark mode templates you see everywhere.
-
----
-
-## Getting It Running Locally
-
-If you want to pull this down and run it on your machine, here's the quickest route:
-
-### Prerequisites
-
-You'll need Node.js 20+ installed, along with access to a PostgreSQL instance and a Redis instance (local or Upstash). You also need a free Gemini API key from Google AI Studio.
-
-### 1. Clone & Set Up the Backend
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/geeknishantkyeus/lld-lab.git
-cd lld-lab/backend
-npm install
+cd lld-lab
 ```
 
-Copy the example environment file and fill in your keys:
+### 2. Backend Setup
 
 ```bash
+cd backend
+npm install
 cp .env.example .env
 ```
 
-Your `.env` needs:
-- `DATABASE_URL`: Your PostgreSQL connection string
-- `REDIS_URL`: Redis connection URL (e.g. `redis://localhost:6379` or Upstash `rediss://...`)
-- `GEMINI_API_KEY`: Your Gemini API key
-- `PORT`: `5000`
-- `FRONTEND_URL`: `http://localhost:5173`
+Configure your `backend/.env` with:
+```env
+PORT=5000
+DATABASE_URL=postgresql://user:password@localhost:5432/lld_lab
+REDIS_URL=redis://localhost:6379
+GEMINI_API_KEY=your_gemini_api_key_here
+FRONTEND_URL=http://localhost:5173
+```
 
-Run migrations and seed the 3 benchmark problems:
-
+Push schema migrations and seed the benchmark problems:
 ```bash
 npm run db:push
 npm run db:seed
 npm run dev
 ```
+The API starts on `http://localhost:5000`.
 
-The backend API will be live on `http://localhost:5000`.
+### 3. Frontend Setup
 
-### 2. Set Up the Frontend
-
-In a separate terminal:
-
+In a new terminal window:
 ```bash
-cd lld-lab/frontend
+cd frontend
 npm install
 npm run dev
 ```
+Open `http://localhost:5173` to start practicing.
 
-Open `http://localhost:5173` in your browser. You can browse problems, open the Monaco editor workspace, submit a design, and see the real-time polling evaluation in action.
+## Available Scripts
 
----
+### Backend (`/backend`)
+- `npm run dev`: Starts the dev server with hot reload via `tsx`
+- `npm run build`: Compiles TypeScript to `dist/`
+- `npm start`: Runs the compiled server (`dist/server.js`)
+- `npm test`: Runs the full Jest test suite (all 73 tests)
+- `npm run db:push`: Applies Drizzle schema changes to Postgres
+- `npm run db:seed`: Seeds initial problems and test user data
+- `npm run db:studio`: Opens Drizzle Studio to inspect database rows
 
-## Running Tests
+### Frontend (`/frontend`)
+- `npm run dev`: Starts Vite dev server on port 5173
+- `npm run build`: Runs TypeScript check and Vite production bundle
+- `npm run preview`: Locally previews production build
 
-I wrote automated test suites covering API routes, edge cases, deterministic validation, Redis caching hit/miss behavior, and user progress endpoints:
+## Deployment Info
 
-```bash
-cd backend
-npm test
-```
+The app is deployed entirely on **Render** (Singapore region):
+- **Database**: Managed PostgreSQL instance (`lld-lab-db`)
+- **Cache**: Managed Key-Value Redis instance (`lld-lab-redis`)
+- **Backend**: Express Web Service deployed with Node 22 (`lld-lab-backend`)
+- **Frontend**: Static Site built with Vite (`lld-lab-frontend`)
 
-You should see 75+ tests passing across 8 test suites.
+Build commands and environment variable mappings are configured via `render.yaml` at root.
 
----
+## Documentation
 
-## Current Limitations & Honest Trade-offs
-
-I want to be transparent about what this platform is and what it isn't yet:
-
-1. **No live code execution sandbox:** Right now, the deterministic evaluator performs static structural analysis (classes, methods, relationships, syntax checks). It does not compile and run bytecode inside an isolated Docker or gVisor sandbox. That means if you write code that compiles syntactically but contains an infinite loop during runtime, the static evaluator won't catch the runtime hang. Real sandbox execution is on my roadmap for a future release.
-2. **AI scoring variance:** Even with temperature set low and a strict JSON schema, LLMs can occasionally vary a few points between runs on subtle design trade-offs. The Redis cache keeps repeat identical submissions deterministic, but minor code edits might see slight variance.
-3. **Single evaluator concurrency:** The background queue is configured with concurrency 2 to stay well within free-tier rate limits. In high-traffic scenarios, submissions queue up and take a few extra seconds to process.
-
----
-
-## Live Links
-
-- **Frontend:** https://lld-lab-frontend.onrender.com
-- **Backend API:** https://lld-lab-backend.onrender.com/api/health
-- **GitHub Repo:** https://github.com/geeknishantkyeus/lld-lab
+All project documentation and architectural decisions live in the `docs/` folder:
+- [Roadmap & Phases](docs/phases.md) — Step-by-step breakdown of how the 7 layers were built.
+- [Product Requirements](docs/prd.md) — Core functional requirements and evaluation rubrics.
+- [Design Tokens](docs/design.md) — Color palette, Tailwind conventions, and UI tokens.
+- [AI Usage Decisions](AI_USAGE.md) — 5 specific AI-assisted architectural decisions and trade-offs.
+- [AI Detection & Humanization Report](docs/ai_detection_report.md) — Scan report and code humanization breakdown.
+- [Render Deployment Guide](docs/render_deployment_guide.md) — Instructions for setting up services on Render.
